@@ -12,8 +12,25 @@ struct ContentView: View {
     var correctAnswer = Int.random(in: 0...2)
     
     var body: some View {
-        Text("Tap to guess the flag")
-        Text(countries[correctAnswer])
+        ZStack {
+            Color.blue
+                .ignoresSafeArea(edges: .all)
+            
+            VStack(spacing: 30) {
+                VStack {
+                    Text("Tap to guess the flag")
+                    Text(countries[correctAnswer])
+                }
+                .foregroundStyle(.white)
+                
+                ForEach(0..<3) { number in
+                    Button {
+                        } label: {
+                            Image(self.countries[number])
+                    }
+                }
+            }
+        }
     }
 }
 
