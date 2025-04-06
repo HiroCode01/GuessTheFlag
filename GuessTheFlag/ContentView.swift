@@ -7,12 +7,24 @@
 
 import SwiftUI
 
+private enum ActiveAlert: Identifiable {
+    case score(title: String, points: Int)
+    case finish(points: Int)
+    
+    var id: String {
+        switch self {
+        case .score: return "score"
+        case .finish: return "finish"
+        }
+    }
+}
+
 struct ContentView: View {
     @State var countries: [String] = ["Estonia", "France", "Germany", "Ireland", "Italy", "Monaco", "Nigeria", "Poland", "Spain", "United Kingdom", "Ukraine", "United States"].shuffled()
     @State var correctAnswer = Int.random(in: 0...2)
-    
-    @State private var showingScore: Bool = false
-    @State private var scoreTitle: String = ""
+    @State private var activeAlert: ActiveAlert?
+    @State private var scorePoints: Int = 0
+    @State private var questionsCount: Int = 8
     
     var body: some View {
         ZStack {
@@ -50,13 +62,13 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
-                .background(.regularMaterial)
+                .background(.ultraThinMaterial)
                 .clipShape(.rect(cornerRadius: 20))
                 
                 Spacer()
                 Spacer()
                 
-                Text("Score: ???")
+                Text("Score: \(scorePoints) / \(questionsCount)")
                     .font(.title.bold())
                     .foregroundStyle(.white)
                 
@@ -64,25 +76,37 @@ struct ContentView: View {
             }
             .padding()
         }
-        .alert(scoreTitle, isPresented: $showingScore) {
-            Button("Continue", action: askQuestion)
-        } message: {
-            Text("Your score is ???")
+        .alert(item: $activeAlert) { alert in
+            switch alert {
+                case .score(let title, let points):
+                return Alert(title: Text(title), message: Text("Your score is: \(points)"), dismissButton: .default(Text("continue"), action: askQuestion))
+                case .finish(points: let points):
+                return Alert(title: Text("🥳You Won!!!"), message: Text("Your score is: \(points)"), dismissButton: .default(Text("Play again"), action: restart))
+            }
         }
     }
     
     func flagTapped(_ number: Int) {
         if number == correctAnswer {
-            scoreTitle = "Correct"
+            scorePoints += 1
+            activeAlert = .score(title: "Correct!", points: scorePoints)
         } else {
-            scoreTitle = "Wrong"
+            activeAlert = .score(title: "Wrong that's a flag of \(countries[number])", points: scorePoints)
         }
-        showingScore = true
+        
+        guard scorePoints < questionsCount else {
+            return activeAlert = .finish(points: scorePoints)
+        }
     }
     
     func askQuestion() {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
+    }
+    
+    func restart() {
+        scorePoints = 0
+        askQuestion()
     }
 }
 
