@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  GuessTheFlag
 //
-//  Created by Fazliddin Abdazimov on 01/04/25.
+//  Created by HiRO on 01/04/25.
 //
 
 import SwiftUI
@@ -25,6 +25,10 @@ struct ContentView: View {
     @State private var activeAlert: ActiveAlert?
     @State private var scorePoints: Int = 0
     @State private var questionsCount: Int = 8
+    
+    //Animation
+    @State private var selectedFlag: Int?
+    @State private var rotationAmount = 0.0
     
     var body: some View {
         ZStack {
@@ -53,8 +57,10 @@ struct ContentView: View {
                     ForEach(0..<3) { number in
                         Button {
                             flagTapped(number)
+                            rotationAmount += 360
+                            selectedFlag = number
                         } label: {
-                            FlagImage(countries: countries, number: number)
+                            FlagImage(countries: countries, number: number, selectedFlag: selectedFlag, rotationAmount: rotationAmount)
                         }
                     }
                 }
@@ -98,6 +104,8 @@ struct ContentView: View {
     }
     
     func askQuestion() {
+        selectedFlag = nil
+        rotationAmount = 0
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
     }
@@ -114,11 +122,20 @@ struct ContentView: View {
 
 struct FlagImage: View {
     var countries: [String]
-    @State var number: Int
+    var number: Int
+    var selectedFlag: Int?
+    var rotationAmount: Double
     
     var body: some View {
         Image(self.countries[number])
+            .rotation3DEffect(.degrees(selectedFlag == number ? rotationAmount : 0), axis: (x: 0, y: 1, z: 0))
             .clipShape(.rect(cornerRadius: 20))
             .shadow(radius: 5)
+            .animation(.spring(response: 0.5, dampingFraction: 0.6, blendDuration: 0.9), value: rotationAmount)
+        
+            .opacity(selectedFlag == nil || selectedFlag == number ? 1 : 0.25)
+            .scaleEffect(selectedFlag == nil || selectedFlag == number ? 1 : 0.8)
+            .offset(x: selectedFlag == nil || selectedFlag == number ? 0 : 20)
+            .animation(.easeInOut(duration: 0.6), value: selectedFlag)
     }
 }
